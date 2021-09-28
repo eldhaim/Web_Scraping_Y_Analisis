@@ -1,0 +1,6 @@
+chromedriver.exe
+.idea/
+.pytest_cache/
+__pycache__/
+Scrap_Linio.py
+scraps.py
