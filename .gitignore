@@ -4,3 +4,4 @@ chromedriver.exe
 __pycache__/
 Scrap_Linio.py
 scraps.py
+capa_datos.log

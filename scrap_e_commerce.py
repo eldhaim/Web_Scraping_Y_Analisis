@@ -8,13 +8,18 @@ import requests
 import pandas as pd
 from datetime import datetime as dt
 import time
+from logger_base import log
+from colorama import init, Fore, Back, Style
 
 def scrap(search):
     #MERCADOLIBRE
     def Datos_Mercado_libre(link = 'https://www.mercadolibre.com.co/', busqueda = None):
+        log.info(Fore.LIGHTMAGENTA_EX + f'BUSQUEDA MERCADOLIBRE: {busqueda}' + Back.RESET)
         try:
+            log.info(Fore.LIGHTMAGENTA_EX + 'Request: "https://www.mercadolibre.com.co/"|||en curso...' + Back.RESET)
             rq = requests.get(link)
             if rq.status_code == 200:
+                log.info(Fore.LIGHTMAGENTA_EX + 'Request: 200|||Solicitud realizada con éxito' + Back.RESET)
                 #INICIO DEL DRIVER----------------------------------------------------------------------------->
                 options = webdriver.ChromeOptions()
                 options.add_argument('--incognito')
@@ -26,6 +31,7 @@ def scrap(search):
                 search_botton.click()
                 delay = 10
                 try:
+                    log.info(Fore.YELLOW + 'Esperando elementos necesarios' + Back.RESET)
                     wait_element = WebDriverWait(driver, delay).until(EC.presence_of_element_located(
                         (By.XPATH, '//div[@class = "nav-bounds nav-bounds-with-cart nav-bounds-with-cp"]')))
 
@@ -91,7 +97,7 @@ def scrap(search):
                         except TimeoutException as e:
                             print(f'La página ha tardado en cargar los elementos necesarios para la extracción: {e}')
 
-                        print(f'Carga correcta de la pagina {driver.current_url}'.center(50, '*'))
+                        log.info(Fore.LIGHTMAGENTA_EX + f'Carga correcta de la pagina {driver.current_url}'.center(50, '*') + Back.RESET)
                         product_list = driver.find_elements_by_xpath('.//li[@class = "ui-search-layout__item"]')
                         diccionario(product_list)
 
@@ -102,9 +108,10 @@ def scrap(search):
                                 (By.XPATH, '//section[@class = "ui-search-results ui-search-results--without-disclaimer"]')))
 
                         except TimeoutException as e:
-                            print(f'La página ha tardado en cargar los elementos necesarios para la extracción: {e}')
+                            log.error(
+                                Fore.LIGHTBLACK_EX + f'La página ha tardado en cargar los elementos necesarios para la extracción: {e}' + Back.RESET)
 
-                        print(f'Carga correcta de la pagina {driver.current_url}'.center(50, '*'))
+                        log.info(Fore.LIGHTMAGENTA_EX + f'Carga correcta de la pagina {driver.current_url}'.center(50, '*'))
                         product_list = driver.find_elements_by_xpath('.//div[@class = "ui-search-result__content-wrapper"]')
                         diccionario(product_list)
 
@@ -141,37 +148,66 @@ def scrap(search):
                     #FIN DEL BLOQUE DE VALIDACIONES------------------------------------------------------------>
 
                     #CREACION DE DATAFRAME PARA RETORNAR CSV--------------------------------------------------->
+                    log.info(Fore.LIGHTMAGENTA_EX + f'Creando archivo CSV' + Back.RESET)
                     df = pd.DataFrame(info_products)
                     now = dt.now()
                     fecha = f'{now.day}_{now.month}_{now.year}_{now.hour}'
 
 
                 except TimeoutException as e:
-                    print(f'La página ha tardado en cargar los elementos necesarios para la extracción: {e}')
+                    log.error(Fore.Fore.LIGHTBLACK_EX +  + f'La página ha tardado en cargar los elementos necesarios para la extracción: {e}' + Back.RESET)
 
                 driver.close()
+                log.info(Fore.LIGHTMAGENTA_EX + f'BUSQUEDA MERCADOLIBRE: {busqueda}||| FINALIZADA'.center(50, '*') + Back.RESET)
                 return df.to_csv(f'{fecha}_Busqueda_MercadoLibre__{busqueda}.csv', index=False, encoding='utf-8')
                 #CIERRE DEL DRIVER----------------------------------------------------------------------------->
 
         except Exception as e:
-            print(f"Error: {e}")
+            log.error(Fore.Fore.LIGHTBLACK_EX +  + f'Error: {e}' + Back.RESET)
 
     #LINIO
     def Datos_Linio(link = 'https://www.linio.com.co/', busqueda = None):
+        log.info(Fore.LIGHTMAGENTA_EX + f'BUSQUEDA LINIO: {busqueda}' + Back.RESET)
         try:
+            log.info(Fore.LIGHTMAGENTA_EX + 'Request: "https://www.linio.com.co/"|||en curso...' + Back.RESET)
             rq = requests.get(link)
             if rq.status_code == 200:
+                log.info(Fore.LIGHTMAGENTA_EX + 'Request: 200|||Solicitud realizada con éxito' + Back.RESET)
                 #INICIO DEL DRIVER----------------------------------------------------------------------------->
                 options = webdriver.ChromeOptions()
                 options.add_argument('--incognito')
                 driver = webdriver.Chrome(executable_path=r'./chromedriver.exe',options=options)
                 driver.get(link)
+                delay = 20
+                delay2 = 5
+                delay3 = 10
+                # INICIO BLOQUE DE VALIDACION DE ELEMENTOS QUE PUEDEN INTERFERIR CON LA EJECUCION GENERAL
+                try:
+                    log.info(Fore.MAGENTA + 'Buscando elementos de interferencia' + Back.RESET)
+                    wait_element = WebDriverWait(driver, delay).until(EC.presence_of_element_located(
+                        (By.XPATH, '//div[@class = "dy-lb-close"]')))
+                    first_bttm = driver.find_element_by_xpath('//div[@class = "dy-lb-close"]').click()
+                    log.info(Fore.GREEN + 'Elemento 1 eliminado' + Back.RESET)
+                except Exception as e:
+                    log.warning(Fore.YELLOW + 'No se encontraron elementos que interfieran con la ejecución' + Back.RESET)
+                try:
+                    log.info(Fore.MAGENTA + 'Buscando elementos de interferencia' + Back.RESET)
+                    wait_element = WebDriverWait(driver, delay2).until(EC.presence_of_element_located(
+                        (By.XPATH, '//button[@id = "onesignal-slidedown-cancel-button"]')))
+                    log.info(Fore.GREEN + 'Elemento 2 eliminado' + Back.RESET)
+                    first_bttm = driver.find_element_by_xpath('//button[@id = "onesignal-slidedown-cancel-button"]').click()
+                except Exception as e:
+                    log.info(Fore.YELLOW + 'No se encontraron elementos que interfieran con la ejecución' + Back.RESET)
+
+                # FIN DEL BLOQUE DE VALIDACION DE INTERFERENCIAS
+
+
                 search_input = driver.find_element_by_xpath('//input[@class = "form-control"]')
                 search_botton = driver.find_element_by_xpath('//button[@class = "btn btn-primary btn-search"]')
                 search_input.send_keys(busqueda)
                 search_botton.click()
-                delay = 10
                 try:
+                    log.info(Fore.LIGHTMAGENTA_EX + Back.RESET)
                     wait_element = WebDriverWait(driver, delay).until(EC.presence_of_element_located(
                         (By.XPATH, '//nav[@id = "subheader-navbar"]')))
 
@@ -215,9 +251,9 @@ def scrap(search):
                                 (By.XPATH, '//div[@class = "switchable-product-container row catalog-product-sm-container"]')))
 
                         except TimeoutException as e:
-                            print(f'La página ha tardado en cargar los elementos necesarios para la extracción: {e}')
+                            log.error(Fore.LIGHTBLACK_EX + f'La página ha tardado en cargar los elementos necesarios para la extracción: {e}' + Back.RESET)
 
-                        print(f'Carga correcta de la pagina {driver.current_url}'.center(50, '*'))
+                        log.info(Fore.LIGHTMAGENTA_EX + f'Carga correcta de la pagina {driver.current_url}'.center(50, '*'))
                         product_list = driver.find_elements_by_xpath('.//div[@class = "detail-container"]')
                         diccionario(product_list)
 
@@ -239,26 +275,24 @@ def scrap(search):
                     #FIN DEL BLOQUE DE VALIDACIONES------------------------------------------------------------>
 
                     # CREACION DE DATAFRAME PARA RETORNAR CSV-------------------------------------------------->
+                    log.info(Fore.LIGHTMAGENTA_EX + f'Creando archivo CSV' + Back.RESET)
                     df = pd.DataFrame(info_products)
                     now = dt.now()
                     fecha = f'{now.day}_{now.month}_{now.year}_{now.hour}'
 
-
                 except TimeoutException as e:
-                    print(f'La página ha tardado en cargar los elementos necesarios para la extracción: {e}')
+                    log.error(Fore.Fore.LIGHTBLACK_EX +  + f'La página ha tardado en cargar los elementos necesarios para la extracción: {e}' + Back.RESET)
                 driver.close()
+                log.info(Fore.LIGHTMAGENTA_EX + f'BUSQUEDA LINIO: {busqueda}||| FINALIZADA'.center(50,'*') + Back.RESET)
                 return df.to_csv(f'{fecha}_Busqueda_Linio__{busqueda}.csv', index=False, encoding='utf-8')
                 # CIERRE DEL DRIVER----------------------------------------------------------------------------->
         except Exception as e:
-            print(f"Error: {e}")
+            log.error(Fore.Fore.LIGHTBLACK_EX +  + f'Error: {e}' + Back.RESET)
 
-    Datos_Mercado_libre(busqueda = search)
-    time.sleep(5)
     Datos_Linio(busqueda = search)
     time.sleep(5)
+    Datos_Mercado_libre(busqueda = search)
 
 
-lista_de_busqueda = ['teclado mouse']
 
-for busqueda in lista_de_busqueda:
-    scrap(busqueda)
+
